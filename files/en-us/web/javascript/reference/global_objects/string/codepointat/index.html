@@ -32,16 +32,14 @@ browser-compat: javascript.builtins.String.codePointAt
 </dl>
 
 <h3 id="Return_value">Return value</h3>
+    
+<p>A decimal number representing the code point value of the character at the given <code><var>pos</var></code>.</p>
 
-<p>A number representing the code point value of the character at the given
-  <code><var>pos</var></code>. If there is no element at <code>pos</code>, returns
-  {{jsxref("undefined")}}.</p>
-
-<h2 id="Description">Description</h2>
-
-<p>If there is no element at the specified position, {{jsxref("undefined")}} is returned.
-  If no UTF-16 surrogate pair begins at <code><var>pos</var></code>, the code unit at
-  <code><var>pos</var></code> is returned.</p>
+<ul>
+  <li>If there is no element at <code><var>pos</var></code>, returns <a href="/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined"><code>undefined</code></a>.</li>
+  <li>If the element at <code><var>pos</var></code> is a UTF-16 high surrogate, returns the code point of the surrogate <em>pair</em>.</li>
+  <li>If the element at <code><var>pos</var></code> is a UTF-16 low surrogate, returns <em>only</em> the low surrogate code point.</li>
+</ul>
 
 <h2 id="Examples">Examples</h2>
 
@@ -55,10 +53,43 @@ browser-compat: javascript.builtins.String.codePointAt
 
 <h3 id="Looping_with_codePointAt">Looping with codePointAt()</h3>
 
-<pre class="brush: js">for (let codePoint of '\ud83d\udc0e\ud83d\udc71\u2764') {
+<p>Because indexing to a <code><var>pos</var></code> whose element is a UTF-16 low surrogate, returns <em>only</em> the low surrogate,
+   it's better not to index directly into a string.</p>
+
+<pre class="brush: js notranslate example-bad">s = "abԐ🙂";
+console.log(s.length);
+
+for (i = 0; i < s.length; i++) {
+	console.log(s[i] + " = " + s.codePointAt(i));
+}
+
+// 5, "a = 97", "b = 98", "Ԑ = 1296", "� = 128578", "� = 56898"
+
+// 🙂 == U+1F642 == 128578
+// \uD83D == 55357 (high surrogate)
+// \uDE42 == 56898 (low surrogate)
+</pre>
+
+<p>Instead, use a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Loops_and_iteration#for...of_statement"><code>for...of</code></a> statement
+   or an Array's <a href="/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach"><code>forEach()</code></a> method
+   (or anything which correctly iterates UTF-16 surrogates) to iterate the string, using <code>codePointAt(0)</code> to get the code point of each element.</p>
+
+<pre class="brush: js notranslate example-good">for (let codePoint of '\ud83d\udc0e\ud83d\udc71\u2764') {
    console.log(codePoint.codePointAt(0).toString(16))
 }
 // '1f40e', '1f471', '2764'
+</pre>
+
+<pre class="brush: js notranslate example-good">x = Array.from("abԐ🙂");
+console.log(x.length);
+
+x.forEach( c => console.log(c + " = " + c.codePointAt(0)) );
+
+// 4, "a = 97", "b = 98", "Ԑ = 1296", "🙂 = 128578"
+
+// 🙂 == U+1F642 == 128578
+// \uD83D == 55357 (high surrogate)
+// \uDE42 == 56898 (low surrogate)
 </pre>
 
 <h2 id="Polyfill">Polyfill</h2>
